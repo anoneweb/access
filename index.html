@@ -1,409 +1,466 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Login dan Hacker Password Extractor</title>
-<style>
-  body {
-    background-color: #0d1117;
-    color: #c9d1d9;
-    font-family: 'Courier New', Courier, monospace;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin: 0;
-    padding: 20px;
-  }
-  #loginContainer, #prankContainer {
-    background-color: #161b22;
-    padding: 40px 50px;
-    border-radius: 10px;
-    box-shadow: 0 0 20px #238636aa;
-    max-width: 600px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  h1, h2 {
-    color: #58a6ff;
-    margin-bottom: 40px;
-    text-align: center;
-  }
-  #loginContainer h2 {
-    margin-bottom: 25px;
-  }
-  input[type="password"], input[type="email"] {
-    width: 100%;
-    padding: 12px 16px;
-    font-size: 1.1rem;
-    border: none;
-    border-radius: 6px;
-    background-color: #0d1117;
-    color: #c9d1d9;
-    box-shadow: inset 0 0 8px #30363d;
-    margin-bottom: 20px;
-  }
-  input[type="password"]:focus, input[type="email"]:focus {
-    outline: none;
-    box-shadow: 0 0 10px #58a6ff;
-  }
-  button {
-    background-color: #238636;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: #c9d1d9;
-    cursor: pointer;
-    box-shadow: 0 0 10px #238636aa;
-    user-select: none;
-    transition: background-color 0.3s ease;
-  }
-  button:hover:not(:disabled) {
-    background-color: #2ea043;
-    box-shadow: 0 0 15px #2ea043cc;
-  }
-  button:disabled {
-    background-color: #444c56;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-  #errorMsg {
-    color: #ff7b72;
-    font-weight: 600;
-    margin-bottom: 15px;
-    text-align: center;
-    min-height: 22px;
-  }
-  #limitInfo {
-    color: #79c0ff;
-    font-weight: 600;
-    user-select: none;
-    font-size: 1.1rem;
-    min-width: 140px;
-    text-align: center;
-  }
-  form#hackForm {
-    display: flex;
-    gap: 15px;
-    max-width: 600px;
-    width: 100%;
-    margin-bottom: 40px;
-    align-items: center;
-  }
-  #loadingContainer {
-    width: 100%;
-    max-width: 600px;
-    background-color: #161b22;
-    border-radius: 8px;
-    padding: 20px 30px;
-    box-shadow: 0 0 15px #238636aa;
-    font-size: 1.3rem;
-    line-height: 1.6;
-    color: #58a6ff;
-    font-weight: 700;
-    user-select: none;
-    position: relative;
-    margin-bottom: 40px;
-    overflow: hidden;
-    display: none;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  #progressPercent {
-    margin-top: 8px;
-    font-size: 1.5rem;
-    font-weight: 900;
-    letter-spacing: 2px;
-  }
-  #progressBar {
-    display: flex;
-    gap: 4px;
-    margin-top: 15px;
-    height: 20px;
-    width: 100%;
-    max-width: 200px;
-  }
-  .block {
-    width: 15px;
-    background-color: #238636;
-    border-radius: 3px;
-    opacity: 0.3;
-    flex-shrink: 0;
-  }
-  .block.animate {
-    animation: bounce 1.2s infinite ease-in-out;
-  }
-  .block.animate:nth-child(1) { animation-delay: 0s; }
-  .block.animate:nth-child(2) { animation-delay: 0.15s; }
-  .block.animate:nth-child(3) { animation-delay: 0.3s; }
-  .block.animate:nth-child(4) { animation-delay: 0.45s; }
-  .block.animate:nth-child(5) { animation-delay: 0.6s; }
-  .block.animate:nth-child(6) { animation-delay: 0.75s; }
-  .block.animate:nth-child(7) { animation-delay: 0.9s; }
-  .block.animate:nth-child(8) { animation-delay: 1.05s; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hacker Password Extractor</title>
+  <style>
+    body {
+      background-color: #0d1117;
+      color: #c9d1d9;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+      overflow: hidden;
+    }
+    #loginContainer, #prankContainer {
+      background-color: #161b22;
+      padding: 40px 50px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px #238636aa;
+      max-width: 600px;
+      width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #prankContainer {
+      max-height: 100vh;
+      overflow-y: auto;
+    }
+    /* Hanya tampilkan salah satu container */
+    #loginContainer.hidden, #prankContainer.hidden {
+      display: none !important;
+    }
 
-  @keyframes bounce {
-    0%, 80%, 100% {
-      transform: translateY(0);
+    h1, h2 {
+      color: #58a6ff;
+      margin-bottom: 40px;
+      text-align: center;
+      user-select: none;
+    }
+    #loginContainer h2 {
+      margin-bottom: 25px;
+    }
+    input[type="password"], input[type="email"] {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #0d1117;
+      color: #c9d1d9;
+      box-shadow: inset 0 0 8px #30363d;
+      margin-bottom: 20px;
+    }
+    input[type="password"]:focus, input[type="email"]:focus {
+      outline: none;
+      box-shadow: 0 0 10px #58a6ff;
+    }
+    button {
+      background-color: #238636;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #c9d1d9;
+      cursor: pointer;
+      box-shadow: 0 0 10px #238636aa;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+    button:hover:not(:disabled) {
+      background-color: #2ea043;
+      box-shadow: 0 0 15px #2ea043cc;
+    }
+    button:disabled {
+      background-color: #444c56;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    #errorMsg {
+      color: #ff7b72;
+      font-weight: 600;
+      margin-bottom: 15px;
+      text-align: center;
+      min-height: 22px;
+    }
+    #limitInfo {
+      color: #79c0ff;
+      font-weight: 600;
+      user-select: none;
+      font-size: 1.1rem;
+      min-width: 140px;
+      text-align: center;
+    }
+    form#hackForm {
+      display: flex;
+      gap: 15px;
+      max-width: 600px;
+      width: 100%;
+      margin-bottom: 40px;
+      align-items: center;
+    }
+    #loadingContainer {
+      width: 100%;
+      max-width: 600px;
+      background-color: #161b22;
+      border-radius: 8px;
+      padding: 20px 30px;
+      box-shadow: 0 0 15px #238636aa;
+      font-size: 1.3rem;
+      line-height: 1.6;
+      color: #58a6ff;
+      font-weight: 700;
+      user-select: none;
+      position: relative;
+      margin-bottom: 40px;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    #progressPercent {
+      margin-top: 8px;
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+    #progressBar {
+      display: flex;
+      gap: 4px;
+      margin-top: 15px;
+      height: 20px;
+      width: 100%;
+      max-width: 200px;
+    }
+    .block {
+      width: 15px;
+      background-color: #238636;
+      border-radius: 3px;
       opacity: 0.3;
+      flex-shrink: 0;
     }
-    40% {
-      transform: translateY(-15px);
-      opacity: 1;
+    .block.animate {
+      animation: bounce 1.2s infinite ease-in-out;
     }
-  }
+    .block.animate:nth-child(1) { animation-delay: 0s; }
+    .block.animate:nth-child(2) { animation-delay: 0.15s; }
+    .block.animate:nth-child(3) { animation-delay: 0.3s; }
+    .block.animate:nth-child(4) { animation-delay: 0.45s; }
+    .block.animate:nth-child(5) { animation-delay: 0.6s; }
+    .block.animate:nth-child(6) { animation-delay: 0.75s; }
+    .block.animate:nth-child(7) { animation-delay: 0.9s; }
+    .block.animate:nth-child(8) { animation-delay: 1.05s; }
 
-  #resultContainer {
-    width: 100%;
-    max-width: 600px;
-    background-color: #161b22;
-    border-radius: 8px;
-    padding: 25px 30px;
-    box-shadow: 0 0 15px #238636aa;
-    font-size: 1.3rem;
-    line-height: 1.6;
-    user-select: all;
-    white-space: pre-wrap;
-    word-break: break-word;
-    position: relative;
-    display: none;
-    margin-top: 0;
-  }
-  #resultContainer strong {
-    color: #58a6ff;
-  }
-  #passwordDisplay {
-    font-family: 'Courier New', monospace;
-    background: #0d1117;
-    padding: 8px 12px;
-    border-radius: 5px;
-    letter-spacing: 1.2px;
-    display: inline-block;
-    min-width: 280px;
-  }
-  #togglePasswordBtn {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    background-color: #238636;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 5px;
-    font-weight: 600;
-    cursor: pointer;
-    color: #c9d1d9;
-    font-size: 1rem;
-    box-shadow: 0 0 8px #238636aa;
-    user-select: none;
-    transition: background-color 0.3s ease;
-  }
-  #togglePasswordBtn:hover {
-    background-color: #2ea043;
-    box-shadow: 0 0 12px #2ea043cc;
-  }
+    @keyframes bounce {
+      0%, 80%, 100% {
+        transform: translateY(0);
+        opacity: 0.3;
+      }
+      40% {
+        transform: translateY(-15px);
+        opacity: 1;
+      }
+    }
 
-  /* Sembunyikan prank container default */
-  #prankContainer {
-    display: none;
-  }
-</style>
+    #resultContainer {
+      width: 100%;
+      max-width: 600px;
+      background-color: #161b22;
+      border-radius: 8px;
+      padding: 25px 30px;
+      box-shadow: 0 0 15px #238636aa;
+      font-size: 1.3rem;
+      line-height: 1.6;
+      user-select: all;
+      white-space: pre-wrap;
+      word-break: break-word;
+      position: relative;
+      display: none;
+      margin-top: 0;
+    }
+    #resultContainer strong {
+      color: #58a6ff;
+    }
+    #passwordDisplay {
+      font-family: 'Courier New', monospace;
+      background: #0d1117;
+      padding: 8px 12px;
+      border-radius: 5px;
+      letter-spacing: 1.2px;
+      display: inline-block;
+      min-width: 280px;
+    }
+    #togglePasswordBtn {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      background-color: #238636;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #c9d1d9;
+      font-size: 1rem;
+      box-shadow: 0 0 8px #238636aa;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+    #togglePasswordBtn:hover {
+      background-color: #2ea043;
+      box-shadow: 0 0 12px #2ea043cc;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Halaman Login -->
-  <div id="loginContainer" role="main" aria-label="Halaman login kode akses">
+  <!-- Login Kode Akses -->
+  <div id="loginContainer">
+    <h1>Hacker Password Extractor</h1>
     <h2>Masukkan Kode Akses</h2>
-    <form id="loginForm" autocomplete="off" novalidate>
-      <input type="password" id="accessCode" placeholder="Kode akses rahasia" aria-label="Kode akses rahasia" required />
-      <div id="errorMsg" aria-live="assertive"></div>
-      <button type="submit" aria-label="Submit kode akses">Masuk</button>
+    <form id="loginForm">
+      <input
+        type="password"
+        id="accessCodeInput"
+        placeholder="Kode akses rahasia"
+        autocomplete="off"
+        required
+        minlength="3"
+      />
+      <button type="submit">Masuk</button>
+      <p id="errorMsg"></p>
     </form>
   </div>
 
-  <!-- Halaman Prank -->
-  <div id="prankContainer" role="main" aria-label="Halaman prank hacker password extractor">
-
+  <!-- Halaman Prank Hacker -->
+  <div id="prankContainer" class="hidden" tabindex="0" aria-live="polite">
     <h1>Hacker Password Extractor</h1>
-
-    <form id="hackForm" autocomplete="off" spellcheck="false" novalidate>
+    <form id="hackForm">
       <input
         type="email"
         id="email"
-        name="email"
         placeholder="Masukkan email target"
-        required
-        aria-label="Masukkan email target"
         autocomplete="off"
-        spellcheck="false"
+        required
       />
-      <button type="submit" aria-label="Hack password email target" id="hackBtn">Hack</button>
-      <div id="limitInfo" aria-live="polite" aria-atomic="true">Sisa akses: 5</div>
+      <button id="hackBtn" type="submit">Hack</button>
+      <span id="limitInfo">Sisa akses: 5</span>
     </form>
 
-    <div id="loadingContainer" aria-live="polite" role="status" aria-label="Proses loading">
-      <div>Proses mengekstrak password...</div>
-      <div id="progressPercent">0%</div>
+    <div id="loadingContainer" aria-label="Proses loading hacking">
+      Memproses...
       <div id="progressBar" aria-hidden="true">
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
+        <div class="block"></div>
       </div>
+      <div id="progressPercent" aria-live="polite" aria-atomic="true">0%</div>
     </div>
 
-    <div id="resultContainer" aria-live="polite" role="region">
-      <div>Email target: <strong id="emailResult"></strong></div>
-      <div style="margin-top: 12px;">
-        Password ditemukan: <span id="passwordDisplay"></span>
-        <button id="togglePasswordBtn" aria-pressed="false" aria-label="Toggle tampilkan password">Lihat Password</button>
-      </div>
+    <div id="resultContainer" aria-live="polite" aria-atomic="true">
+      <strong>Email Target:</strong> <span id="emailResult"></span><br />
+      <strong>Password:</strong> <span id="passwordDisplay"></span>
+      <button id="togglePasswordBtn" aria-pressed="false" aria-label="Tampilkan atau sembunyikan password">Lihat Password</button>
     </div>
-
   </div>
 
-<script>
-  // Login bagian
-  const loginForm = document.getElementById('loginForm');
-  const accessCodeInput = document.getElementById('accessCode');
-  const errorMsg = document.getElementById('errorMsg');
-  const loginContainer = document.getElementById('loginContainer');
-  const prankContainer = document.getElementById('prankContainer');
+  <script>
+    const loginContainer = document.getElementById('loginContainer');
+    const prankContainer = document.getElementById('prankContainer');
+    const loginForm = document.getElementById('loginForm');
+    const accessCodeInput = document.getElementById('accessCodeInput');
+    const errorMsg = document.getElementById('errorMsg');
 
-  const correctCode = 'prank123'; // Ganti kode akses sesuai keinginan
+    const correctCode = 'prank123';
 
-  if (localStorage.getItem('accessGranted') === 'true') {
-    showPrank();
-  }
-
-  loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const enteredCode = accessCodeInput.value.trim();
-
-    if (enteredCode === correctCode) {
-      localStorage.setItem('accessGranted', 'true');
-      showPrank();
-    } else {
-      errorMsg.textContent = 'Kode akses salah! Coba lagi.';
-      accessCodeInput.value = '';
-      accessCodeInput.focus();
-    }
-  });
-
-  function showPrank() {
-    loginContainer.style.display = 'none';
-    prankContainer.style.display = 'block';
-  }
-
-  // Bagian prank
-
-  const hackForm = document.getElementById('hackForm');
-  const emailInput = document.getElementById('email');
-  const hackBtn = document.getElementById('hackBtn');
-  const limitInfo = document.getElementById('limitInfo');
-  const loadingContainer = document.getElementById('loadingContainer');
-  const progressPercent = document.getElementById('progressPercent');
-  const progressBar = document.getElementById('progressBar');
-  const resultContainer = document.getElementById('resultContainer');
-  const emailResult = document.getElementById('emailResult');
-  const passwordDisplay = document.getElementById('passwordDisplay');
-  const togglePasswordBtn = document.getElementById('togglePasswordBtn');
-
-  let attemptsLeft = 5;
-  let fullPassword = '';
-  let maskedPassword = '';
-  let isPasswordShown = false;
-
-  function generateRandomPassword() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let pwd = '';
-    for (let i = 0; i < 12; i++) {
-      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return pwd;
-  }
-
-  function maskPassword(pwd) {
-    if (pwd.length <= 4) return '*'.repeat(pwd.length);
-    const first = pwd.slice(0, 2);
-    const last = pwd.slice(-2);
-    const masked = '*'.repeat(pwd.length - 4);
-    return first + masked + last;
-  }
-
-  function updateLimitDisplay() {
-    limitInfo.textContent = `Sisa akses: ${attemptsLeft}`;
-    if (attemptsLeft <= 0) {
-      hackBtn.disabled = true;
-      limitInfo.textContent = 'Sisa akses: 0 (limit habis)';
-    }
-  }
-
-  hackForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (attemptsLeft <= 0) return;
-
-    const email = emailInput.value.trim();
-    if (!email) {
-      alert('Mohon masukkan email target.');
-      return;
-    }
-
-    hackBtn.disabled = true;
-    loadingContainer.style.display = 'flex';
-    progressPercent.textContent = '0%';
-    progressBar.querySelectorAll('.block').forEach(b => b.classList.add('animate'));
-    resultContainer.style.display = 'none';
-
-    let progress = 0;
-    const duration = 30000; // 30 detik
-    const stepTime = 100;
-    const totalSteps = duration / stepTime;
-
-    const interval = setInterval(() => {
-      progress++;
-      const percent = Math.floor((progress / totalSteps) * 100);
-      progressPercent.textContent = percent + '%';
-
-      if (percent >= 100) {
-        clearInterval(interval);
-        progressBar.querySelectorAll('.block').forEach(b => b.classList.remove('animate'));
-        displayResult(email);
-        hackBtn.disabled = false;
+    // Periksa status login pada localStorage
+    function checkLoginStatus() {
+      const granted = localStorage.getItem('accessGranted');
+      if (granted === 'true') {
+        loginContainer.classList.add('hidden');
+        prankContainer.classList.remove('hidden');
+        prankContainer.focus();
+      } else {
+        loginContainer.classList.remove('hidden');
+        prankContainer.classList.add('hidden');
       }
-    }, stepTime);
+    }
 
-    attemptsLeft--;
-    updateLimitDisplay();
-  });
+    checkLoginStatus();
 
-  function displayResult(email) {
-    emailResult.textContent = email;
-    fullPassword = generateRandomPassword();
-    maskedPassword = maskPassword(fullPassword);
-    isPasswordShown = false;
-    passwordDisplay.textContent = maskedPassword;
-    togglePasswordBtn.textContent = 'Lihat Password';
-    togglePasswordBtn.setAttribute('aria-pressed', 'false');
-    resultContainer.style.display = 'block';
-  }
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const enteredCode = accessCodeInput.value.trim();
 
-  togglePasswordBtn.addEventListener('click', () => {
-    if (!fullPassword) return;
-    isPasswordShown = !isPasswordShown;
-    passwordDisplay.textContent = isPasswordShown ? fullPassword : maskedPassword;
-    togglePasswordBtn.textContent = isPasswordShown ? 'Sembunyikan Password' : 'Lihat Password';
-    togglePasswordBtn.setAttribute('aria-pressed', isPasswordShown.toString());
-  });
+      if (enteredCode === correctCode) {
+        localStorage.setItem('accessGranted', 'true');
+        errorMsg.textContent = '';
+        accessCodeInput.value = '';
+        checkLoginStatus();
+      } else {
+        errorMsg.textContent = 'Kode akses salah! Coba lagi.';
+        accessCodeInput.value = '';
+        accessCodeInput.focus();
+      }
+    });
 
-</script>
+    // Bagian prank
 
+    const hackForm = document.getElementById('hackForm');
+    const emailInput = document.getElementById('email');
+    const hackBtn = document.getElementById('hackBtn');
+    const limitInfo = document.getElementById('limitInfo');
+    const loadingContainer = document.getElementById('loadingContainer');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressBar = document.getElementById('progressBar');
+    const resultContainer = document.getElementById('resultContainer');
+    const emailResult = document.getElementById('emailResult');
+    const passwordDisplay = document.getElementById('passwordDisplay');
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+
+    let attemptsLeft = 5;
+    let fullPassword = '';
+    let maskedPassword = '';
+    let isPasswordShown = false;
+
+    function generateRandomPassword() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let pwd = '';
+      for (let i = 0; i < 12; i++) {
+        pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return pwd;
+    }
+
+    function maskPassword(pwd) {
+      if (pwd.length <= 4) return '*'.repeat(pwd.length);
+      const first = pwd.slice(0, 2);
+      const last = pwd.slice(-2);
+      const masked = '*'.repeat(pwd.length - 4);
+      return first + masked + last;
+    }
+
+    function updateLimitDisplay() {
+      limitInfo.textContent = `Sisa akses: ${attemptsLeft}`;
+      if (attemptsLeft <= 0) {
+        hackBtn.disabled = true;
+      }
+    }
+
+    hackForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      if (attemptsLeft <= 0) return;
+
+      const email = emailInput.value.trim();
+      if (!email) return;
+
+      // Reset tampilan hasil
+      resultContainer.style.display = 'none';
+      togglePasswordBtn.style.display = 'none';
+
+      // Show loading container dan reset progress
+      loadingContainer.style.display = 'flex';
+      progressPercent.textContent = '0%';
+      [...progressBar.children].forEach((block) => {
+        block.classList.add('animate');
+        block.style.opacity = '0.3';
+      });
+
+      let duration = 30000; // 30 detik
+      let startTime = Date.now();
+
+      function updateProgress() {
+        let elapsed = Date.now() - startTime;
+        let progress = Math.min(elapsed / duration, 1);
+        let percent = Math.floor(progress * 100);
+        progressPercent.textContent = `${percent}%`;
+
+        // Atur opacity blok sesuai progress agar animasi berhenti pas 100%
+        [...progressBar.children].forEach((block, i) => {
+          if (percent >= (i + 1) * 12.5) {
+            block.style.opacity = '1';
+          } else {
+            block.style.opacity = '0.3';
+          }
+        });
+
+        if (progress < 1) {
+          requestAnimationFrame(updateProgress);
+        } else {
+          // Loading selesai
+          [...progressBar.children].forEach((block) => {
+            block.classList.remove('animate');
+            block.style.opacity = '1';
+          });
+          showResult(email);
+        }
+      }
+      requestAnimationFrame(updateProgress);
+    });
+
+    function showResult(email) {
+      fullPassword = generateRandomPassword();
+      maskedPassword = maskPassword(fullPassword);
+      emailResult.textContent = email;
+      passwordDisplay.textContent = maskedPassword;
+      isPasswordShown = false;
+      togglePasswordBtn.textContent = 'Lihat Password';
+      togglePasswordBtn.setAttribute('aria-pressed', 'false');
+      togglePasswordBtn.style.display = 'inline-block';
+      resultContainer.style.display = 'block';
+
+      attemptsLeft--;
+      updateLimitDisplay();
+      emailInput.value = '';
+    }
+
+    togglePasswordBtn.addEventListener('click', () => {
+      if (isPasswordShown) {
+        passwordDisplay.textContent = maskedPassword;
+        togglePasswordBtn.textContent = 'Lihat Password';
+        togglePasswordBtn.setAttribute('aria-pressed', 'false');
+        isPasswordShown = false;
+      } else {
+        passwordDisplay.textContent = fullPassword;
+        togglePasswordBtn.textContent = 'Sembunyikan Password';
+        togglePasswordBtn.setAttribute('aria-pressed', 'true');
+        isPasswordShown = true;
+      }
+    });
+
+    // Simpan dan ambil jumlah akses tersisa di localStorage supaya tetap jika reload halaman
+    window.addEventListener('load', () => {
+      let storedAttempts = localStorage.getItem('attemptsLeft');
+      if (storedAttempts !== null) {
+        attemptsLeft = parseInt(storedAttempts, 10);
+        if (attemptsLeft <= 0) {
+          hackBtn.disabled = true;
+          attemptsLeft = 0;
+        }
+      } else {
+        localStorage.setItem('attemptsLeft', attemptsLeft);
+      }
+      updateLimitDisplay();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('attemptsLeft', attemptsLeft);
+    });
+  </script>
 </body>
 </html>
