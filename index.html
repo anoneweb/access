@@ -164,7 +164,7 @@
         <option value="instagram">Instagram Username</option>
         <option value="x">X Username</option>
       </select>
-      <input type="email" id="targetInput" placeholder="Masukkan email target" required autocomplete="off" />
+      <input type="text" id="targetInput" placeholder="Masukkan email target" required autocomplete="off" />
       <button id="hackBtn" type="submit">Hack</button>
       <span id="limitInfo">Sisa akses: 5</span>
     </form>
@@ -244,7 +244,7 @@
       hackBtn.disabled = attemptsLeft <= 0;
     }
 
-    // Change placeholder and input type based on selected target type
+    // Change placeholder based on selected target type
     targetTypeSelect.addEventListener('change', () => {
       const type = targetTypeSelect.value;
       switch(type) {
@@ -254,11 +254,11 @@
           break;
         case 'instagram':
           targetInput.placeholder = 'Masukkan username Instagram target';
-          targetInput.type = 'email'; // samakan tipe jadi email
+          targetInput.type = 'text';
           break;
         case 'x':
           targetInput.placeholder = 'Masukkan username X target';
-          targetInput.type = 'email'; // samakan tipe jadi email
+          targetInput.type = 'text';
           break;
       }
       targetInput.value = '';
@@ -387,11 +387,6 @@
       if (localStorage.getItem('accessGranted') === 'true') {
         loginContainer.classList.add('hidden');
         prankContainer.classList.remove('hidden');
-        updateLimitDisplay();
-      }
-      const savedAttempts = localStorage.getItem('attemptsLeft');
-      if (savedAttempts !== null) {
-        attemptsLeft = parseInt(savedAttempts, 10);
         updateLimitDisplay();
       }
     });
