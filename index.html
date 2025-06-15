@@ -254,11 +254,11 @@
           break;
         case 'instagram':
           targetInput.placeholder = 'Masukkan username Instagram target';
-          targetInput.type = 'email'; // samakan tipe jadi email
+          targetInput.type = 'email'; // samakan tipe jadi email untuk konsisten style
           break;
         case 'x':
           targetInput.placeholder = 'Masukkan username X target';
-          targetInput.type = 'email'; // samakan tipe jadi email
+          targetInput.type = 'email'; // samakan tipe jadi email untuk konsisten style
           break;
       }
       targetInput.value = '';
@@ -304,7 +304,27 @@
       if (attemptsLeft <= 0) return;
 
       const target = targetInput.value.trim();
-      if (!target) return;
+      const targetType = targetTypeSelect.value;
+
+      if (!target) {
+        alert('Target tidak boleh kosong!');
+        return;
+      }
+
+      if (targetType === 'email') {
+        // validasi sederhana email
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(target)) {
+          alert('Format email tidak valid!');
+          return;
+        }
+      } else {
+        // untuk Instagram & X, jangan ada '@' di input
+        if (target.includes('@')) {
+          alert('Username Instagram/X tidak boleh mengandung karakter "@"');
+          return;
+        }
+      }
 
       loadingContainer.style.display = 'block';
       resultContainer.style.display = 'none';
@@ -312,7 +332,6 @@
       progressPercent.textContent = '0%';
 
       // Messages based on target type
-      const targetType = targetTypeSelect.value;
       const baseMsgs = [
         'Menghubungkan ke server target...',
         'Akses diterima.',
@@ -322,7 +341,6 @@
         'Menampilkan hasil...'
       ];
       let messages = baseMsgs.map(msg => msg);
-      // Customize message 2nd line based on target type
       switch(targetType) {
         case 'email':
           messages[1] = 'Akses email target diterima.';
@@ -335,7 +353,6 @@
           break;
       }
 
-      // Start terminal logs + progress bar simultaneously
       showTerminalLogs(messages);
 
       let duration = 30000;
