@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Hacker Password Extractor</title>
   <style>
-    /* --- style global --- */
     body {
       background-color: #0d1117;
       color: #c9d1d9;
@@ -14,10 +13,10 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;   /* full viewport tinggi */
+      height: 100vh;
       margin: 0;
       padding: 20px;
-      overflow: hidden;  /* hilangkan scroll vertikal */
+      overflow: hidden;
     }
     #loginContainer, #prankContainer {
       background-color: #161b22;
@@ -31,12 +30,13 @@
       flex-direction: column;
       align-items: center;
     }
-
-    /* khusus prank container supaya scroll internal jika konten panjang */
     #prankContainer {
-      display: none;
-      max-height: 100vh; /* batasi tinggi container sesuai viewport */
-      overflow-y: auto;  /* scroll vertical jika isi terlalu panjang */
+      max-height: 100vh;
+      overflow-y: auto;
+    }
+    /* Hanya tampilkan salah satu container */
+    #loginContainer.hidden, #prankContainer.hidden {
+      display: none !important;
     }
 
     h1, h2 {
@@ -242,7 +242,7 @@
   </div>
 
   <!-- Halaman Prank Hacker -->
-  <div id="prankContainer" tabindex="0" aria-live="polite">
+  <div id="prankContainer" class="hidden" tabindex="0" aria-live="polite">
     <h1>Hacker Password Extractor</h1>
     <form id="hackForm">
       <input
@@ -279,18 +279,28 @@
   </div>
 
   <script>
-    // Variabel DOM
     const loginContainer = document.getElementById('loginContainer');
+    const prankContainer = document.getElementById('prankContainer');
     const loginForm = document.getElementById('loginForm');
     const accessCodeInput = document.getElementById('accessCodeInput');
     const errorMsg = document.getElementById('errorMsg');
-    const prankContainer = document.getElementById('prankContainer');
 
-    const correctCode = 'prank123'; // Ganti kode akses sesuai keinginan
+    const correctCode = 'prank123';
 
-    if (localStorage.getItem('accessGranted') === 'true') {
-      showPrank();
+    // Periksa status login pada localStorage
+    function checkLoginStatus() {
+      const granted = localStorage.getItem('accessGranted');
+      if (granted === 'true') {
+        loginContainer.classList.add('hidden');
+        prankContainer.classList.remove('hidden');
+        prankContainer.focus();
+      } else {
+        loginContainer.classList.remove('hidden');
+        prankContainer.classList.add('hidden');
+      }
     }
+
+    checkLoginStatus();
 
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -298,19 +308,15 @@
 
       if (enteredCode === correctCode) {
         localStorage.setItem('accessGranted', 'true');
-        showPrank();
+        errorMsg.textContent = '';
+        accessCodeInput.value = '';
+        checkLoginStatus();
       } else {
         errorMsg.textContent = 'Kode akses salah! Coba lagi.';
         accessCodeInput.value = '';
         accessCodeInput.focus();
       }
     });
-
-    function showPrank() {
-      loginContainer.style.display = 'none';
-      prankContainer.style.display = 'flex';
-      prankContainer.focus();
-    }
 
     // Bagian prank
 
@@ -352,57 +358,75 @@
       limitInfo.textContent = `Sisa akses: ${attemptsLeft}`;
       if (attemptsLeft <= 0) {
         hackBtn.disabled = true;
-        limitInfo.textContent = 'Sisa akses: 0 (limit habis)';
       }
     }
 
     hackForm.addEventListener('submit', (e) => {
       e.preventDefault();
+
       if (attemptsLeft <= 0) return;
 
       const email = emailInput.value.trim();
-      if (!email) {
-        alert('Mohon masukkan email target.');
-        return;
-      }
+      if (!email) return;
 
-      hackBtn.disabled = true;
+      // Reset tampilan hasil
+      resultContainer.style.display = 'none';
+      togglePasswordBtn.style.display = 'none';
+
+      // Show loading container dan reset progress
       loadingContainer.style.display = 'flex';
       progressPercent.textContent = '0%';
-      progressBar.querySelectorAll('.block').forEach(b => b.classList.add('animate'));
-      resultContainer.style.display = 'none';
+      [...progressBar.children].forEach((block) => {
+        block.classList.add('animate');
+        block.style.opacity = '0.3';
+      });
 
-      let progress = 0;
-      const duration = 30000; // 30 detik
-      const stepTime = 100;
-      const totalSteps = duration / stepTime;
+      let duration = 30000; // 30 detik
+      let startTime = Date.now();
 
-      const interval = setInterval(() => {
-        progress++;
-        const percent = Math.floor((progress / totalSteps) * 100);
-        progressPercent.textContent = percent + '%';
+      function updateProgress() {
+        let elapsed = Date.now() - startTime;
+        let progress = Math.min(elapsed / duration, 1);
+        let percent = Math.floor(progress * 100);
+        progressPercent.textContent = `${percent}%`;
 
-        if (percent >= 100) {
-          clearInterval(interval);
-          progressBar.querySelectorAll('.block').forEach(b => b.classList.remove('animate'));
-          displayResult(email);
-          hackBtn.disabled = false;
+        // Atur opacity blok sesuai progress agar animasi berhenti pas 100%
+        [...progressBar.children].forEach((block, i) => {
+          if (percent >= (i + 1) * 12.5) {
+            block.style.opacity = '1';
+          } else {
+            block.style.opacity = '0.3';
+          }
+        });
+
+        if (progress < 1) {
+          requestAnimationFrame(updateProgress);
+        } else {
+          // Loading selesai
+          [...progressBar.children].forEach((block) => {
+            block.classList.remove('animate');
+            block.style.opacity = '1';
+          });
+          showResult(email);
         }
-      }, stepTime);
+      }
+      requestAnimationFrame(updateProgress);
+    });
+
+    function showResult(email) {
+      fullPassword = generateRandomPassword();
+      maskedPassword = maskPassword(fullPassword);
+      emailResult.textContent = email;
+      passwordDisplay.textContent = maskedPassword;
+      isPasswordShown = false;
+      togglePasswordBtn.textContent = 'Lihat Password';
+      togglePasswordBtn.setAttribute('aria-pressed', 'false');
+      togglePasswordBtn.style.display = 'inline-block';
+      resultContainer.style.display = 'block';
 
       attemptsLeft--;
       updateLimitDisplay();
-    });
-
-    function displayResult(email) {
-      emailResult.textContent = email;
-      fullPassword = generateRandomPassword();
-      maskedPassword = maskPassword(fullPassword);
-      isPasswordShown = false;
-      passwordDisplay.textContent = maskedPassword;
-      togglePasswordBtn.textContent = 'Lihat Password';
-      togglePasswordBtn.setAttribute('aria-pressed', 'false');
-      resultContainer.style.display = 'block';
+      emailInput.value = '';
     }
 
     togglePasswordBtn.addEventListener('click', () => {
@@ -419,21 +443,24 @@
       }
     });
 
-    // Reset akses jika pengguna reload dan limit habis, bisa diubah sesuai keinginan
+    // Simpan dan ambil jumlah akses tersisa di localStorage supaya tetap jika reload halaman
     window.addEventListener('load', () => {
-      if (localStorage.getItem('attemptsLeft') === null) {
-        localStorage.setItem('attemptsLeft', attemptsLeft);
+      let storedAttempts = localStorage.getItem('attemptsLeft');
+      if (storedAttempts !== null) {
+        attemptsLeft = parseInt(storedAttempts, 10);
+        if (attemptsLeft <= 0) {
+          hackBtn.disabled = true;
+          attemptsLeft = 0;
+        }
       } else {
-        attemptsLeft = parseInt(localStorage.getItem('attemptsLeft'), 10);
-        if (attemptsLeft <= 0) hackBtn.disabled = true;
-        updateLimitDisplay();
+        localStorage.setItem('attemptsLeft', attemptsLeft);
       }
+      updateLimitDisplay();
     });
 
     window.addEventListener('beforeunload', () => {
       localStorage.setItem('attemptsLeft', attemptsLeft);
     });
-
   </script>
 </body>
 </html>
