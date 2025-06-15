@@ -38,7 +38,7 @@
       flex-direction: column;
       gap: 15px;
     }
-    input[type="password"], input[type="email"], select {
+    input[type="password"], input[type="email"], select, input[type="text"] {
       padding: 12px;
       font-size: 1rem;
       border: none;
@@ -108,6 +108,23 @@
       font-family: monospace;
       white-space: pre-line;
       user-select: text;
+      position: relative;
+    }
+    #mapContainer {
+      margin-top: 10px;
+      width: 100%;
+      height: 180px;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      overflow: hidden;
+      background-color: #0d1117;
+      display: none;
+    }
+    #mapImage {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.6);
     }
     #resultContainer {
       display: none;
@@ -121,6 +138,7 @@
       border-radius: 5px;
       display: inline-block;
       margin-top: 5px;
+      font-family: monospace;
     }
     #togglePasswordBtn {
       margin-top: 10px;
@@ -139,6 +157,9 @@
       padding: 10px;
       border-radius: 5px;
       font-size: 0.9rem;
+      font-family: monospace;
+      white-space: pre-wrap;
+      user-select: text;
     }
     strong {
       color: #58a6ff;
@@ -178,6 +199,9 @@
       </div>
       <div id="progressPercent">0%</div>
       <div id="terminalLog"></div>
+      <div id="mapContainer">
+        <img id="mapImage" src="" alt="Peta lokasi" />
+      </div>
     </div>
 
     <div id="resultContainer">
@@ -211,6 +235,8 @@
     const progressBar = document.getElementById('progressBar');
     const progressPercent = document.getElementById('progressPercent');
     const terminalLog = document.getElementById('terminalLog');
+    const mapContainer = document.getElementById('mapContainer');
+    const mapImage = document.getElementById('mapImage');
     const resultContainer = document.getElementById('resultContainer');
     const targetResult = document.getElementById('targetResult');
     const passwordDisplay = document.getElementById('passwordDisplay');
@@ -250,149 +276,189 @@
       switch(type) {
         case 'email':
           targetInput.placeholder = 'Masukkan email target';
-          targetInput.type = 'email';
           break;
         case 'instagram':
           targetInput.placeholder = 'Masukkan username Instagram target';
-          targetInput.type = 'text';
           break;
         case 'x':
           targetInput.placeholder = 'Masukkan username X target';
-          targetInput.type = 'text';
           break;
       }
       targetInput.value = '';
     });
 
-    // Typing effect helper
-    async function typeText(element, text, delay=40) {
-      element.textContent = '';
-      for (let i = 0; i < text.length; i++) {
-        element.textContent += text[i];
-        element.scrollTop = element.scrollHeight;
-        await new Promise(r => setTimeout(r, delay));
+    // Password generation
+    function generatePassword() {
+      const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+      const digits = '0123456789';
+      const symbols = '!@#$%^&*()_+{}:"<>?|[];\',./`~';
+      let chars = uppercase + lowercase + digits + symbols;
+
+      let passLength = 8 + Math.floor(Math.random() * 8); // 8-15 length
+      let password = '';
+      for(let i=0; i < passLength; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
       }
+      return password;
     }
 
-    // Show terminal messages with typing effect sequentially
-    async function showTerminalLogs(messages) {
-      terminalLog.textContent = '';
-      for (const msg of messages) {
-        await typeText(terminalLog, terminalLog.textContent + msg + '\n');
-      }
+    // Create masked password for show/hide toggle
+    function maskPassword(pw) {
+      return '*'.repeat(pw.length);
     }
 
-    // Generate random password with letters and digits only, length 10-15
-    function generateRandomPassword() {
-      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      const length = Math.floor(Math.random() * 6) + 10; // 10 to 15 chars
-      let result = '';
-      for (let i = 0; i < length; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return result;
+    // Generate fake IP and location for tracker
+    function generateFakeIp() {
+      return `${rand(1,255)}.${rand(0,255)}.${rand(0,255)}.${rand(0,255)}`;
+    }
+    function rand(min,max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Mask password, show first 2 and last 2 chars
-    function maskPassword(pwd) {
-      if (pwd.length <= 4) return '*'.repeat(pwd.length);
-      return pwd.slice(0, 2) + '*'.repeat(pwd.length - 4) + pwd.slice(-2);
+    // Some fake locations with lat/lon and name
+    const fakeLocations = [
+      { name: 'Jakarta, Indonesia', lat: -6.2088, lon: 106.8456 },
+      { name: 'Bandung, Indonesia', lat: -6.9175, lon: 107.6191 },
+      { name: 'Surabaya, Indonesia', lat: -7.2575, lon: 112.7521 },
+      { name: 'Bali, Indonesia', lat: -8.4095, lon: 115.1889 },
+      { name: 'Medan, Indonesia', lat: 3.5952, lon: 98.6722 },
+      { name: 'New York, USA', lat: 40.7128, lon: -74.0060 },
+      { name: 'London, UK', lat: 51.5074, lon: -0.1278 },
+      { name: 'Tokyo, Japan', lat: 35.6762, lon: 139.6503 },
+      { name: 'Sydney, Australia', lat: -33.8688, lon: 151.2093 },
+      { name: 'Paris, France', lat: 48.8566, lon: 2.3522 }
+    ];
+
+    // Get static map image url from location coords (OpenStreetMap via Mapbox Static API alternative)
+    function getStaticMapUrl(lat, lon) {
+      // Using a free tile provider from OpenStreetMap + Static Map (via Wikimedia)
+      // Format: https://staticmap.openstreetmap.de/staticmap.php?center=lat,lon&zoom=10&size=400x200
+      return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lon}&zoom=8&size=600x300&markers=${lat},${lon},red-pushpin`;
     }
 
+    // Main hacking simulation
     hackForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (attemptsLeft <= 0) return;
+      if(attemptsLeft <= 0) return;
 
-      const target = targetInput.value.trim();
-      if (!target) return;
-
-      loadingContainer.style.display = 'block';
-      resultContainer.style.display = 'none';
+      hackBtn.disabled = true;
       terminalLog.textContent = '';
       progressPercent.textContent = '0%';
+      showProgress(0);
+      loadingContainer.style.display = 'block';
+      mapContainer.style.display = 'none';
+      resultContainer.style.display = 'none';
+      activityLog.textContent = '';
 
-      // Messages based on target type
-      const targetType = targetTypeSelect.value;
-      const baseMsgs = [
+      const target = targetInput.value.trim();
+      if (!target) {
+        alert('Mohon masukkan target terlebih dahulu!');
+        hackBtn.disabled = false;
+        loadingContainer.style.display = 'none';
+        return;
+      }
+
+      // Progress bar animation with fake logs
+      const steps = [
         'Menghubungkan ke server target...',
-        'Akses diterima.',
-        'Mengambil data kredensial...',
-        'Dekripsi password...',
-        'Sinkronisasi data selesai.',
-        'Menampilkan hasil...'
+        'Memeriksa validitas target...',
+        'Mengakses database...',
+        'Mengekstrak password...',
+        'Menyelesaikan proses...'
       ];
-      let messages = baseMsgs.map(msg => msg);
-      // Customize message 2nd line based on target type
-      switch(targetType) {
-        case 'email':
-          messages[1] = 'Akses email target diterima.';
-          break;
-        case 'instagram':
-          messages[1] = 'Akses akun Instagram target diterima.';
-          break;
-        case 'x':
-          messages[1] = 'Akses akun X target diterima.';
-          break;
-      }
 
-      // Start terminal logs + progress bar simultaneously
-      showTerminalLogs(messages);
+      for(let i=0; i < steps.length; i++) {
+        await delay(1500);
+        terminalLog.textContent += steps[i] + '\n';
 
-      let duration = 30000;
-      let start = Date.now();
-
-      function updateProgress() {
-        let elapsed = Date.now() - start;
-        let progress = Math.min(elapsed / duration, 1);
-        progressPercent.textContent = Math.floor(progress * 100) + '%';
-
-        const blocks = progressBar.children;
-        for (let i = 0; i < blocks.length; i++) {
-          blocks[i].style.opacity = progress >= (i + 1) / blocks.length ? '1' : '0.3';
+        // After first step, show fake IP tracker simulation
+        if(i === 0) {
+          await simulateFakeIpTracker();
         }
 
-        if (progress < 1) {
-          requestAnimationFrame(updateProgress);
-        } else {
-          showResult(target, targetType);
-        }
+        showProgress(Math.floor(((i+1)/steps.length)*100));
       }
-      requestAnimationFrame(updateProgress);
-    });
 
-    function showResult(target, type) {
-      fullPassword = generateRandomPassword();
+      // Generate password
+      fullPassword = generatePassword();
       maskedPassword = maskPassword(fullPassword);
-      targetResult.textContent = target;
       passwordDisplay.textContent = maskedPassword;
       isPasswordShown = false;
-      togglePasswordBtn.textContent = 'Lihat Password';
+
+      targetResult.textContent = target;
       resultContainer.style.display = 'block';
-      activityLog.innerHTML = `
-        ✔️ Target (${type}) ditemukan: ${target}<br>
-        ✔️ Password berhasil diekstrak<br>
-        ❗ Anda memiliki ${attemptsLeft - 1} akses tersisa
-      `;
+
       attemptsLeft--;
       updateLimitDisplay();
-    }
+      hackBtn.disabled = attemptsLeft <= 0;
 
-    togglePasswordBtn.addEventListener('click', () => {
-      isPasswordShown = !isPasswordShown;
-      passwordDisplay.textContent = isPasswordShown ? fullPassword : maskedPassword;
-      togglePasswordBtn.textContent = isPasswordShown ? 'Sembunyikan Password' : 'Lihat Password';
+      // Log activity
+      const now = new Date();
+      activityLog.textContent += `[${now.toLocaleTimeString()}] Target berhasil dihack: ${target}\nPassword ditemukan: ${fullPassword}\n`;
+      loadingContainer.style.display = 'none';
     });
 
+    // Simulate fake IP tracker with location & map
+    async function simulateFakeIpTracker() {
+      mapContainer.style.display = 'block';
+
+      // Simulate for ~4 cycles
+      for(let i=0; i < 4; i++) {
+        const fakeIp = generateFakeIp();
+        const loc = fakeLocations[rand(0, fakeLocations.length - 1)];
+
+        terminalLog.textContent += `Melacak IP: ${fakeIp} - Lokasi: ${loc.name}\n`;
+        terminalLog.scrollTop = terminalLog.scrollHeight;
+
+        mapImage.src = getStaticMapUrl(loc.lat, loc.lon);
+
+        // wait ~900ms before next location
+        await delay(900);
+      }
+    }
+
+    // Progress bar UI update
+    function showProgress(percent) {
+      const blocks = progressBar.children;
+      const totalBlocks = blocks.length;
+      const blocksToShow = Math.floor((percent / 100) * totalBlocks);
+
+      for(let i=0; i < totalBlocks; i++) {
+        if(i < blocksToShow) {
+          blocks[i].style.opacity = '1';
+        } else {
+          blocks[i].style.opacity = '0.3';
+        }
+      }
+      progressPercent.textContent = `${percent}%`;
+    }
+
+    // Delay helper
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Toggle password visibility
+    togglePasswordBtn.addEventListener('click', () => {
+      if(isPasswordShown) {
+        passwordDisplay.textContent = maskedPassword;
+        togglePasswordBtn.textContent = 'Lihat Password';
+        isPasswordShown = false;
+      } else {
+        passwordDisplay.textContent = fullPassword;
+        togglePasswordBtn.textContent = 'Sembunyikan Password';
+        isPasswordShown = true;
+      }
+    });
+
+    // On load check access
     window.addEventListener('load', () => {
-      if (localStorage.getItem('accessGranted') === 'true') {
+      if(localStorage.getItem('accessGranted') === 'true') {
         loginContainer.classList.add('hidden');
         prankContainer.classList.remove('hidden');
         updateLimitDisplay();
       }
-    });
-
-    window.addEventListener('beforeunload', () => {
-      localStorage.setItem('attemptsLeft', attemptsLeft);
     });
   </script>
 </body>
