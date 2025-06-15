@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Hacker Password Extractor</title>
   <style>
     body {
@@ -16,7 +16,6 @@
       align-items: center;
       height: 100vh;
     }
-
     #loginContainer, #prankContainer {
       background-color: #161b22;
       padding: 40px;
@@ -26,24 +25,20 @@
       width: 100%;
       box-sizing: border-box;
     }
-
     .hidden {
       display: none !important;
     }
-
     h1 {
       color: #58a6ff;
       text-align: center;
     }
-
     form {
       margin-top: 20px;
       display: flex;
       flex-direction: column;
       gap: 15px;
     }
-
-    input[type="password"], input[type="email"] {
+    input[type="password"], input[type="email"], select {
       padding: 12px;
       font-size: 1rem;
       border: none;
@@ -51,7 +46,6 @@
       background-color: #0d1117;
       color: #c9d1d9;
     }
-
     button {
       padding: 12px;
       font-size: 1rem;
@@ -62,40 +56,33 @@
       color: #fff;
       cursor: pointer;
     }
-
     button:disabled {
       background-color: #444c56;
       cursor: not-allowed;
     }
-
     #errorMsg {
       color: #ff7b72;
       font-weight: bold;
       text-align: center;
     }
-
     #hackForm {
       display: flex;
       flex-direction: column;
       gap: 15px;
     }
-
     #limitInfo {
       font-weight: bold;
       color: #79c0ff;
     }
-
     #loadingContainer {
       display: none;
       margin-top: 20px;
     }
-
     #progressBar {
       display: flex;
       gap: 4px;
       margin-top: 10px;
     }
-
     .block {
       width: 15px;
       height: 15px;
@@ -103,13 +90,11 @@
       opacity: 0.3;
       border-radius: 3px;
     }
-
     #progressPercent {
       margin-top: 10px;
       font-weight: bold;
       color: #58a6ff;
     }
-
     #terminalLog {
       background: #0d1117;
       color: #58a6ff;
@@ -122,15 +107,14 @@
       border-radius: 5px;
       font-family: monospace;
       white-space: pre-line;
+      user-select: text;
     }
-
     #resultContainer {
       display: none;
       margin-top: 20px;
       border-top: 1px solid #30363d;
       padding-top: 20px;
     }
-
     #passwordDisplay {
       background-color: #161b22;
       padding: 8px;
@@ -138,7 +122,6 @@
       display: inline-block;
       margin-top: 5px;
     }
-
     #togglePasswordBtn {
       margin-top: 10px;
       background-color: #238636;
@@ -149,7 +132,6 @@
       color: #c9d1d9;
       font-weight: 600;
     }
-
     #activityLog {
       margin-top: 15px;
       background-color: #0d1117;
@@ -158,7 +140,6 @@
       border-radius: 5px;
       font-size: 0.9rem;
     }
-
     strong {
       color: #58a6ff;
     }
@@ -178,7 +159,12 @@
   <div id="prankContainer" class="hidden">
     <h1>Hacker Password Extractor</h1>
     <form id="hackForm">
-      <input type="email" id="email" placeholder="Masukkan email target" required />
+      <select id="targetType" required>
+        <option value="email">Email</option>
+        <option value="instagram">Instagram Username</option>
+        <option value="x">X Username</option>
+      </select>
+      <input type="text" id="targetInput" placeholder="Masukkan email target" required autocomplete="off" />
       <button id="hackBtn" type="submit">Hack</button>
       <span id="limitInfo">Sisa akses: 5</span>
     </form>
@@ -195,7 +181,7 @@
     </div>
 
     <div id="resultContainer">
-      <p><strong>Email Target:</strong> <span id="emailResult"></span></p>
+      <p><strong>Target:</strong> <span id="targetResult"></span></p>
       <p><strong>Password:</strong> <span id="passwordDisplay"></span></p>
       <button id="togglePasswordBtn">Lihat Password</button>
       <div id="activityLog"></div>
@@ -217,7 +203,8 @@
     const loginForm = document.getElementById('loginForm');
 
     const hackForm = document.getElementById('hackForm');
-    const emailInput = document.getElementById('email');
+    const targetTypeSelect = document.getElementById('targetType');
+    const targetInput = document.getElementById('targetInput');
     const hackBtn = document.getElementById('hackBtn');
     const limitInfo = document.getElementById('limitInfo');
     const loadingContainer = document.getElementById('loadingContainer');
@@ -225,7 +212,7 @@
     const progressPercent = document.getElementById('progressPercent');
     const terminalLog = document.getElementById('terminalLog');
     const resultContainer = document.getElementById('resultContainer');
-    const emailResult = document.getElementById('emailResult');
+    const targetResult = document.getElementById('targetResult');
     const passwordDisplay = document.getElementById('passwordDisplay');
     const togglePasswordBtn = document.getElementById('togglePasswordBtn');
     const activityLog = document.getElementById('activityLog');
@@ -235,6 +222,7 @@
     let maskedPassword = '';
     let isPasswordShown = false;
 
+    // Login handler
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const enteredCode = accessCodeInput.value.trim();
@@ -250,38 +238,82 @@
       }
     });
 
+    // Update limit info & disable hack button if no attempts left
     function updateLimitDisplay() {
       limitInfo.textContent = `Sisa akses: ${attemptsLeft}`;
       hackBtn.disabled = attemptsLeft <= 0;
     }
 
+    // Change placeholder based on selected target type
+    targetTypeSelect.addEventListener('change', () => {
+      const type = targetTypeSelect.value;
+      switch(type) {
+        case 'email':
+          targetInput.placeholder = 'Masukkan email target';
+          targetInput.type = 'email';
+          break;
+        case 'instagram':
+          targetInput.placeholder = 'Masukkan username Instagram target';
+          targetInput.type = 'text';
+          break;
+        case 'x':
+          targetInput.placeholder = 'Masukkan username X target';
+          targetInput.type = 'text';
+          break;
+      }
+      targetInput.value = '';
+    });
+
+    // Typing effect helper
+    async function typeText(element, text, delay=40) {
+      element.textContent = '';
+      for (let i = 0; i < text.length; i++) {
+        element.textContent += text[i];
+        element.scrollTop = element.scrollHeight;
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+
+    // Show terminal messages with typing effect sequentially
+    async function showTerminalLogs(messages) {
+      terminalLog.textContent = '';
+      for (const msg of messages) {
+        await typeText(terminalLog, terminalLog.textContent + msg + '\n');
+      }
+    }
+
+    // Generate random password with letters and digits only, length 10-15
     function generateRandomPassword() {
       const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      const length = Math.floor(Math.random() * 6) + 10; // 10 to 15 chars
       let result = '';
-      const length = Math.floor(Math.random() * 5) + 8;
       for (let i = 0; i < length; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
       }
       return result;
     }
 
+    // Mask password, show first 2 and last 2 chars
     function maskPassword(pwd) {
+      if (pwd.length <= 4) return '*'.repeat(pwd.length);
       return pwd.slice(0, 2) + '*'.repeat(pwd.length - 4) + pwd.slice(-2);
     }
 
-    hackForm.addEventListener('submit', (e) => {
+    hackForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (attemptsLeft <= 0) return;
 
-      const email = emailInput.value.trim();
-      if (!email) return;
+      const target = targetInput.value.trim();
+      if (!target) return;
 
       loadingContainer.style.display = 'block';
       resultContainer.style.display = 'none';
-      terminalLog.innerText = '';
-      progressPercent.innerText = '0%';
+      terminalLog.textContent = '';
+      progressPercent.textContent = '0%';
 
-      const messages = [
+      // Messages based on target type
+      const targetType = targetTypeSelect.value;
+      const baseMsgs = [
         'Menghubungkan ke server target...',
         'Akses diterima.',
         'Mengambil data kredensial...',
@@ -289,17 +321,22 @@
         'Sinkronisasi data selesai.',
         'Menampilkan hasil...'
       ];
+      let messages = baseMsgs.map(msg => msg);
+      // Customize message 2nd line based on target type
+      switch(targetType) {
+        case 'email':
+          messages[1] = 'Akses email target diterima.';
+          break;
+        case 'instagram':
+          messages[1] = 'Akses akun Instagram target diterima.';
+          break;
+        case 'x':
+          messages[1] = 'Akses akun X target diterima.';
+          break;
+      }
 
-      let msgIndex = 0;
-      const msgInterval = setInterval(() => {
-        if (msgIndex < messages.length) {
-          terminalLog.innerText += messages[msgIndex] + '\n';
-          terminalLog.scrollTop = terminalLog.scrollHeight;
-          msgIndex++;
-        } else {
-          clearInterval(msgInterval);
-        }
-      }, 5000); // Tiap 5 detik muncul log baru
+      // Start terminal logs + progress bar simultaneously
+      showTerminalLogs(messages);
 
       let duration = 30000;
       let start = Date.now();
@@ -317,22 +354,22 @@
         if (progress < 1) {
           requestAnimationFrame(updateProgress);
         } else {
-          showResult(email);
+          showResult(target, targetType);
         }
       }
       requestAnimationFrame(updateProgress);
     });
 
-    function showResult(email) {
+    function showResult(target, type) {
       fullPassword = generateRandomPassword();
       maskedPassword = maskPassword(fullPassword);
-      emailResult.textContent = email;
+      targetResult.textContent = target;
       passwordDisplay.textContent = maskedPassword;
       isPasswordShown = false;
       togglePasswordBtn.textContent = 'Lihat Password';
       resultContainer.style.display = 'block';
       activityLog.innerHTML = `
-        ✔️ Email ditemukan: ${email}<br>
+        ✔️ Target (${type}) ditemukan: ${target}<br>
         ✔️ Password berhasil diekstrak<br>
         ❗ Anda memiliki ${attemptsLeft - 1} akses tersisa
       `;
