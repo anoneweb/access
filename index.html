@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Prank Password Hacker</title>
+  <title>Hacker Password Extractor</title>
   <style>
     /* --- style global --- */
     body {
@@ -225,6 +225,7 @@
 
   <!-- Login Kode Akses -->
   <div id="loginContainer">
+    <h1>Hacker Password Extractor</h1>
     <h2>Masukkan Kode Akses</h2>
     <form id="loginForm">
       <input
@@ -242,7 +243,7 @@
 
   <!-- Halaman Prank Hacker -->
   <div id="prankContainer" tabindex="0" aria-live="polite">
-    <h1>Professional Password Hacker</h1>
+    <h1>Hacker Password Extractor</h1>
     <form id="hackForm">
       <input
         type="email"
@@ -405,13 +406,34 @@
     }
 
     togglePasswordBtn.addEventListener('click', () => {
-      if (!fullPassword) return;
-      isPasswordShown = !isPasswordShown;
-      passwordDisplay.textContent = isPasswordShown ? fullPassword : maskedPassword;
-      togglePasswordBtn.textContent = isPasswordShown ? 'Sembunyikan Password' : 'Lihat Password';
-      togglePasswordBtn.setAttribute('aria-pressed', isPasswordShown.toString());
+      if (isPasswordShown) {
+        passwordDisplay.textContent = maskedPassword;
+        togglePasswordBtn.textContent = 'Lihat Password';
+        togglePasswordBtn.setAttribute('aria-pressed', 'false');
+        isPasswordShown = false;
+      } else {
+        passwordDisplay.textContent = fullPassword;
+        togglePasswordBtn.textContent = 'Sembunyikan Password';
+        togglePasswordBtn.setAttribute('aria-pressed', 'true');
+        isPasswordShown = true;
+      }
     });
-  </script>
 
+    // Reset akses jika pengguna reload dan limit habis, bisa diubah sesuai keinginan
+    window.addEventListener('load', () => {
+      if (localStorage.getItem('attemptsLeft') === null) {
+        localStorage.setItem('attemptsLeft', attemptsLeft);
+      } else {
+        attemptsLeft = parseInt(localStorage.getItem('attemptsLeft'), 10);
+        if (attemptsLeft <= 0) hackBtn.disabled = true;
+        updateLimitDisplay();
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('attemptsLeft', attemptsLeft);
+    });
+
+  </script>
 </body>
 </html>
