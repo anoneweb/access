@@ -34,11 +34,9 @@
       max-height: 100vh;
       overflow-y: auto;
     }
-    /* Hanya tampilkan salah satu container */
     #loginContainer.hidden, #prankContainer.hidden {
       display: none !important;
     }
-
     h1, h2 {
       color: #58a6ff;
       margin-bottom: 40px;
@@ -219,6 +217,25 @@
       background-color: #2ea043;
       box-shadow: 0 0 12px #2ea043cc;
     }
+
+    /* Daftar kode akses di bawah form login */
+    #accessCodeList {
+      margin-top: 20px;
+      background-color: #0d1117;
+      color: #79c0ff;
+      font-family: monospace;
+      font-size: 0.9rem;
+      padding: 15px 20px;
+      border-radius: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+      width: 100%;
+      box-sizing: border-box;
+      user-select: text;
+      white-space: pre-wrap;
+      word-break: break-word;
+      box-shadow: inset 0 0 10px #79c0ff88;
+    }
   </style>
 </head>
 <body>
@@ -239,6 +256,7 @@
       <button type="submit">Masuk</button>
       <p id="errorMsg"></p>
     </form>
+    <div id="accessCodeList" aria-label="Daftar kode akses yang valid" tabindex="0"></div>
   </div>
 
   <!-- Halaman Prank Hacker -->
@@ -284,10 +302,32 @@
     const loginForm = document.getElementById('loginForm');
     const accessCodeInput = document.getElementById('accessCodeInput');
     const errorMsg = document.getElementById('errorMsg');
+    const accessCodeList = document.getElementById('accessCodeList');
 
-    const correctCode = 'againstworld';
+    const hackForm = document.getElementById('hackForm');
+    const emailInput = document.getElementById('email');
+    const hackBtn = document.getElementById('hackBtn');
+    const limitInfo = document.getElementById('limitInfo');
+    const loadingContainer = document.getElementById('loadingContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    const resultContainer = document.getElementById('resultContainer');
+    const emailResult = document.getElementById('emailResult');
+    const passwordDisplay = document.getElementById('passwordDisplay');
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
 
-    // Periksa status login pada localStorage
+    // 20 Kode akses random 8 karakter alfanumerik
+    const validCodes = [
+      'A1B2C3D4', 'E5F6G7H8', 'I9J0K1L2', 'M3N4O5P6', 'Q7R8S9T0',
+      'U1V2W3X4', 'Y5Z6A7B8', 'C9D0E1F2', 'G3H4I5J6', 'K7L8M9N0',
+      'O1P2Q3R4', 'S5T6U7V8', 'W9X0Y1Z2', 'A3B4C5D6', 'E7F8G9H0',
+      'I1J2K3L4', 'M5N6O7P8', 'Q9R0S1T2', 'U3V4W5X6', 'Y7Z8A9B0'
+    ];
+
+    // Tampilkan daftar kode akses di halaman login
+    accessCodeList.textContent = 'Kode akses valid:\n' + validCodes.join(', ');
+
+    // Cek apakah user sudah login (accessGranted di localStorage)
     function checkLoginStatus() {
       const granted = localStorage.getItem('accessGranted');
       if (granted === 'true') {
@@ -297,16 +337,16 @@
       } else {
         loginContainer.classList.remove('hidden');
         prankContainer.classList.add('hidden');
+        accessCodeInput.focus();
       }
     }
 
-    checkLoginStatus();
-
+    // Handle login form submit
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const enteredCode = accessCodeInput.value.trim();
 
-      if (enteredCode === correctCode) {
+      if (validCodes.includes(enteredCode)) {
         localStorage.setItem('accessGranted', 'true');
         errorMsg.textContent = '';
         accessCodeInput.value = '';
@@ -318,40 +358,28 @@
       }
     });
 
-    // Bagian prank
-
-    const hackForm = document.getElementById('hackForm');
-    const emailInput = document.getElementById('email');
-    const hackBtn = document.getElementById('hackBtn');
-    const limitInfo = document.getElementById('limitInfo');
-    const loadingContainer = document.getElementById('loadingContainer');
-    const progressPercent = document.getElementById('progressPercent');
-    const progressBar = document.getElementById('progressBar');
-    const resultContainer = document.getElementById('resultContainer');
-    const emailResult = document.getElementById('emailResult');
-    const passwordDisplay = document.getElementById('passwordDisplay');
-    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
-
+    // Variabel prank & hack
     let attemptsLeft = 5;
     let fullPassword = '';
     let maskedPassword = '';
     let isPasswordShown = false;
 
     function generateRandomPassword() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      let pwd = '';
-      for (let i = 0; i < 12; i++) {
-        pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      const length = Math.floor(Math.random() * 5) + 8; // 8-12 karakter, no simbol
+      for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-      return pwd;
+      return result;
     }
 
     function maskPassword(pwd) {
       if (pwd.length <= 4) return '*'.repeat(pwd.length);
-      const first = pwd.slice(0, 2);
-      const last = pwd.slice(-2);
-      const masked = '*'.repeat(pwd.length - 4);
-      return first + masked + last;
+      const visibleStart = 2;
+      const visibleEnd = 2;
+      const maskedPart = '*'.repeat(pwd.length - visibleStart - visibleEnd);
+      return pwd.slice(0, visibleStart) + maskedPart + pwd.slice(pwd.length - visibleEnd);
     }
 
     function updateLimitDisplay() {
@@ -363,7 +391,6 @@
 
     hackForm.addEventListener('submit', (e) => {
       e.preventDefault();
-
       if (attemptsLeft <= 0) return;
 
       const email = emailInput.value.trim();
@@ -376,7 +403,7 @@
       // Show loading container dan reset progress
       loadingContainer.style.display = 'flex';
       progressPercent.textContent = '0%';
-      [...progressBar.children].forEach((block) => {
+      [...progressBar.children].forEach(block => {
         block.classList.add('animate');
         block.style.opacity = '0.3';
       });
@@ -390,7 +417,6 @@
         let percent = Math.floor(progress * 100);
         progressPercent.textContent = `${percent}%`;
 
-        // Atur opacity blok sesuai progress agar animasi berhenti pas 100%
         [...progressBar.children].forEach((block, i) => {
           if (percent >= (i + 1) * 12.5) {
             block.style.opacity = '1';
@@ -402,8 +428,8 @@
         if (progress < 1) {
           requestAnimationFrame(updateProgress);
         } else {
-          // Loading selesai
-          [...progressBar.children].forEach((block) => {
+          // Loading selesai, stop animasi
+          [...progressBar.children].forEach(block => {
             block.classList.remove('animate');
             block.style.opacity = '1';
           });
@@ -427,6 +453,7 @@
       attemptsLeft--;
       updateLimitDisplay();
       emailInput.value = '';
+      emailInput.focus();
     }
 
     togglePasswordBtn.addEventListener('click', () => {
@@ -443,8 +470,10 @@
       }
     });
 
-    // Simpan dan ambil jumlah akses tersisa di localStorage supaya tetap jika reload halaman
+    // Load status login dan attemptsLeft dari localStorage
     window.addEventListener('load', () => {
+      checkLoginStatus();
+
       let storedAttempts = localStorage.getItem('attemptsLeft');
       if (storedAttempts !== null) {
         attemptsLeft = parseInt(storedAttempts, 10);
@@ -458,6 +487,7 @@
       updateLimitDisplay();
     });
 
+    // Simpan attemptsLeft sebelum keluar/refresh
     window.addEventListener('beforeunload', () => {
       localStorage.setItem('attemptsLeft', attemptsLeft);
     });
