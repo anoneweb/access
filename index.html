@@ -2,145 +2,143 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hacker Password Extractor</title>
   <style>
     body {
       background-color: #0d1117;
       color: #c9d1d9;
       font-family: 'Courier New', Courier, monospace;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
       margin: 0;
       padding: 20px;
-      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
+
     #loginContainer, #prankContainer {
       background-color: #161b22;
-      padding: 40px 50px;
+      padding: 40px;
       border-radius: 10px;
       box-shadow: 0 0 20px #238636aa;
-      max-width: 600px;
+      max-width: 650px;
       width: 100%;
       box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
     }
-    #loginContainer.hidden, #prankContainer.hidden {
+
+    .hidden {
       display: none !important;
     }
-    h1, h2 {
+
+    h1 {
       color: #58a6ff;
-      margin-bottom: 40px;
       text-align: center;
     }
+
+    form {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
     input[type="password"], input[type="email"] {
-      width: 100%;
-      padding: 12px 16px;
-      font-size: 1.1rem;
+      padding: 12px;
+      font-size: 1rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
       background-color: #0d1117;
       color: #c9d1d9;
-      margin-bottom: 20px;
     }
+
     button {
-      background-color: #238636;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: bold;
       border: none;
-      padding: 12px 24px;
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 1.1rem;
-      color: #c9d1d9;
+      border-radius: 5px;
+      background-color: #238636;
+      color: #fff;
       cursor: pointer;
-      box-shadow: 0 0 10px #238636aa;
     }
-    button:hover:not(:disabled) {
-      background-color: #2ea043;
-    }
+
     button:disabled {
       background-color: #444c56;
       cursor: not-allowed;
     }
+
     #errorMsg {
       color: #ff7b72;
-      font-weight: 600;
-      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
     }
-    #limitInfo {
-      color: #79c0ff;
-      font-weight: 600;
-      margin-left: 15px;
-    }
+
     #hackForm {
       display: flex;
+      flex-direction: column;
       gap: 15px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-bottom: 30px;
-      width: 100%;
     }
+
+    #limitInfo {
+      font-weight: bold;
+      color: #79c0ff;
+    }
+
     #loadingContainer {
       display: none;
-      flex-direction: column;
-      align-items: flex-start;
-      width: 100%;
+      margin-top: 20px;
     }
+
     #progressBar {
       display: flex;
       gap: 4px;
       margin-top: 10px;
-      height: 20px;
-      max-width: 200px;
     }
+
     .block {
       width: 15px;
-      height: 100%;
+      height: 15px;
       background-color: #238636;
       opacity: 0.3;
       border-radius: 3px;
     }
-    .block.animate {
-      animation: bounce 1.2s infinite ease-in-out;
-    }
-    @keyframes bounce {
-      0%, 80%, 100% {
-        transform: translateY(0);
-      }
-      40% {
-        transform: translateY(-10px);
-      }
-    }
+
     #progressPercent {
       margin-top: 10px;
-      font-size: 1.2rem;
       font-weight: bold;
       color: #58a6ff;
     }
+
+    #terminalLog {
+      background: #0d1117;
+      color: #58a6ff;
+      font-size: 0.85rem;
+      padding: 10px;
+      height: 100px;
+      overflow-y: auto;
+      margin-top: 10px;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      font-family: monospace;
+      white-space: pre-line;
+    }
+
     #resultContainer {
       display: none;
-      background-color: #0d1117;
-      padding: 20px;
-      border-radius: 8px;
-      width: 100%;
-      box-sizing: border-box;
-      box-shadow: 0 0 10px #238636aa;
       margin-top: 20px;
+      border-top: 1px solid #30363d;
+      padding-top: 20px;
     }
-    #resultContainer strong {
-      color: #79c0ff;
-    }
+
     #passwordDisplay {
       background-color: #161b22;
-      padding: 6px 12px;
-      border-radius: 4px;
+      padding: 8px;
+      border-radius: 5px;
       display: inline-block;
       margin-top: 5px;
     }
+
     #togglePasswordBtn {
       margin-top: 10px;
       background-color: #238636;
@@ -151,25 +149,32 @@
       color: #c9d1d9;
       font-weight: 600;
     }
-    #togglePasswordBtn:hover {
-      background-color: #2ea043;
+
+    #activityLog {
+      margin-top: 15px;
+      background-color: #0d1117;
+      border: 1px solid #30363d;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 0.9rem;
+    }
+
+    strong {
+      color: #58a6ff;
     }
   </style>
 </head>
 <body>
 
-  <!-- Halaman Login -->
   <div id="loginContainer">
     <h1>Hacker Password Extractor</h1>
-    <h2>Masukkan Kode Akses</h2>
     <form id="loginForm">
-      <input type="password" id="accessCodeInput" placeholder="Kode akses" required />
+      <input type="password" id="accessCodeInput" placeholder="Masukkan kode akses" required />
       <button type="submit">Masuk</button>
     </form>
     <p id="errorMsg"></p>
   </div>
 
-  <!-- Halaman Prank -->
   <div id="prankContainer" class="hidden">
     <h1>Hacker Password Extractor</h1>
     <form id="hackForm">
@@ -179,24 +184,21 @@
     </form>
 
     <div id="loadingContainer">
-      <div>Memproses hacking...</div>
       <div id="progressBar">
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
-        <div class="block animate"></div>
+        <div class="block"></div><div class="block"></div>
+        <div class="block"></div><div class="block"></div>
+        <div class="block"></div><div class="block"></div>
+        <div class="block"></div><div class="block"></div>
       </div>
       <div id="progressPercent">0%</div>
+      <div id="terminalLog"></div>
     </div>
 
     <div id="resultContainer">
-      <div><strong>Email Target:</strong> <span id="emailResult"></span></div>
-      <div><strong>Password:</strong> <span id="passwordDisplay"></span></div>
+      <p><strong>Email Target:</strong> <span id="emailResult"></span></p>
+      <p><strong>Password:</strong> <span id="passwordDisplay"></span></p>
       <button id="togglePasswordBtn">Lihat Password</button>
+      <div id="activityLog"></div>
     </div>
   </div>
 
@@ -210,9 +212,9 @@
 
     const loginContainer = document.getElementById('loginContainer');
     const prankContainer = document.getElementById('prankContainer');
-    const loginForm = document.getElementById('loginForm');
     const accessCodeInput = document.getElementById('accessCodeInput');
     const errorMsg = document.getElementById('errorMsg');
+    const loginForm = document.getElementById('loginForm');
 
     const hackForm = document.getElementById('hackForm');
     const emailInput = document.getElementById('email');
@@ -221,10 +223,12 @@
     const loadingContainer = document.getElementById('loadingContainer');
     const progressBar = document.getElementById('progressBar');
     const progressPercent = document.getElementById('progressPercent');
+    const terminalLog = document.getElementById('terminalLog');
     const resultContainer = document.getElementById('resultContainer');
     const emailResult = document.getElementById('emailResult');
     const passwordDisplay = document.getElementById('passwordDisplay');
     const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const activityLog = document.getElementById('activityLog');
 
     let attemptsLeft = 5;
     let fullPassword = '';
@@ -233,8 +237,8 @@
 
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const code = accessCodeInput.value.trim();
-      if (validCodes.includes(code)) {
+      const enteredCode = accessCodeInput.value.trim();
+      if (validCodes.includes(enteredCode)) {
         localStorage.setItem('accessGranted', 'true');
         loginContainer.classList.add('hidden');
         prankContainer.classList.remove('hidden');
@@ -243,7 +247,6 @@
         updateLimitDisplay();
       } else {
         errorMsg.textContent = 'Kode akses salah!';
-        accessCodeInput.focus();
       }
     });
 
@@ -254,16 +257,15 @@
 
     function generateRandomPassword() {
       const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let pwd = '';
-      const len = Math.floor(Math.random() * 5) + 8;
-      for (let i = 0; i < len; i++) {
-        pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+      let result = '';
+      const length = Math.floor(Math.random() * 5) + 8;
+      for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-      return pwd;
+      return result;
     }
 
     function maskPassword(pwd) {
-      if (pwd.length <= 4) return '*'.repeat(pwd.length);
       return pwd.slice(0, 2) + '*'.repeat(pwd.length - 4) + pwd.slice(-2);
     }
 
@@ -274,31 +276,47 @@
       const email = emailInput.value.trim();
       if (!email) return;
 
-      loadingContainer.style.display = 'flex';
+      loadingContainer.style.display = 'block';
       resultContainer.style.display = 'none';
-      togglePasswordBtn.style.display = 'none';
-      progressPercent.textContent = '0%';
-      [...progressBar.children].forEach(block => {
-        block.style.opacity = '0.3';
-      });
+      terminalLog.innerText = '';
+      progressPercent.innerText = '0%';
+
+      const messages = [
+        'Menghubungkan ke server target...',
+        'Akses diterima.',
+        'Mengambil data kredensial...',
+        'Dekripsi password...',
+        'Sinkronisasi data selesai.',
+        'Menampilkan hasil...'
+      ];
+
+      let msgIndex = 0;
+      const msgInterval = setInterval(() => {
+        if (msgIndex < messages.length) {
+          terminalLog.innerText += messages[msgIndex] + '\n';
+          terminalLog.scrollTop = terminalLog.scrollHeight;
+          msgIndex++;
+        } else {
+          clearInterval(msgInterval);
+        }
+      }, 5000); // Tiap 5 detik muncul log baru
 
       let duration = 30000;
-      let startTime = Date.now();
+      let start = Date.now();
 
       function updateProgress() {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const percent = Math.floor(progress * 100);
-        progressPercent.textContent = `${percent}%`;
+        let elapsed = Date.now() - start;
+        let progress = Math.min(elapsed / duration, 1);
+        progressPercent.textContent = Math.floor(progress * 100) + '%';
 
-        [...progressBar.children].forEach((block, i) => {
-          block.style.opacity = percent >= (i + 1) * 12.5 ? '1' : '0.3';
-        });
+        const blocks = progressBar.children;
+        for (let i = 0; i < blocks.length; i++) {
+          blocks[i].style.opacity = progress >= (i + 1) / blocks.length ? '1' : '0.3';
+        }
 
         if (progress < 1) {
           requestAnimationFrame(updateProgress);
         } else {
-          [...progressBar.children].forEach(block => block.classList.remove('animate'));
           showResult(email);
         }
       }
@@ -312,32 +330,26 @@
       passwordDisplay.textContent = maskedPassword;
       isPasswordShown = false;
       togglePasswordBtn.textContent = 'Lihat Password';
-      togglePasswordBtn.style.display = 'inline-block';
       resultContainer.style.display = 'block';
-      emailInput.value = '';
+      activityLog.innerHTML = `
+        ✔️ Email ditemukan: ${email}<br>
+        ✔️ Password berhasil diekstrak<br>
+        ❗ Anda memiliki ${attemptsLeft - 1} akses tersisa
+      `;
       attemptsLeft--;
       updateLimitDisplay();
     }
 
     togglePasswordBtn.addEventListener('click', () => {
-      if (isPasswordShown) {
-        passwordDisplay.textContent = maskedPassword;
-        togglePasswordBtn.textContent = 'Lihat Password';
-      } else {
-        passwordDisplay.textContent = fullPassword;
-        togglePasswordBtn.textContent = 'Sembunyikan Password';
-      }
       isPasswordShown = !isPasswordShown;
+      passwordDisplay.textContent = isPasswordShown ? fullPassword : maskedPassword;
+      togglePasswordBtn.textContent = isPasswordShown ? 'Sembunyikan Password' : 'Lihat Password';
     });
 
     window.addEventListener('load', () => {
       if (localStorage.getItem('accessGranted') === 'true') {
         loginContainer.classList.add('hidden');
         prankContainer.classList.remove('hidden');
-      }
-      const stored = localStorage.getItem('attemptsLeft');
-      if (stored) {
-        attemptsLeft = parseInt(stored, 10);
         updateLimitDisplay();
       }
     });
